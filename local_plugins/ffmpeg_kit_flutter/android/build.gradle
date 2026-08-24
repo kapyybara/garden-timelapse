@@ -1,0 +1,58 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.1.0'
+    }
+}
+
+rootProject.allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        // com.arthenica:ffmpeg-kit-* is no longer hosted on a live maven
+        // (repo.arthenica.com is dead); the Aliyun mirror still serves it.
+        maven { url 'https://maven.aliyun.com/repository/central' }
+    }
+}
+
+apply plugin: 'com.android.library'
+
+android {
+    // Conditional for compatibility with AGP <4.2.
+    if (project.android.hasProperty("namespace")) {
+        namespace 'com.arthenica.ffmpegkit.flutter'
+    }
+
+    // Bumped 33 -> 36: transitive androidx deps (fragment 1.7.1, window 1.2.0)
+    // require compileSdk >= 34.
+    compileSdkVersion 36
+
+    defaultConfig {
+        minSdkVersion 24
+        targetSdkVersion 36
+        versionCode 603
+        versionName "6.0.3"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+    lintOptions {
+        disable 'GradleCompatible'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation 'androidx.annotation:annotation:1.5.0'
+    implementation 'com.arthenica:ffmpeg-kit-https:6.0-2'
+}
