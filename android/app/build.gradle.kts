@@ -1,10 +1,36 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Release signing config. Credentials live in android/key.properties,
+// which is git-ignored; the keystore (android/app/release.keystore) is kept
+// in git so releases can be rebuilt. Without key.properties, release
+// builds fall back to the debug key.
+// (`Properties` must be imported: in a Gradle script the bare name `java`
+// resolves to the Project's java extension, not the java.* packages.)
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
+}
+
 android {
+    signingConfigs {
+        create("release") {
+            val storeFile = keystoreProperties["storeFile"] as? String
+            if (storeFile != null) {
+                this.storeFile = file(storeFile)
+                storePassword = keystoreProperties["storePassword"] as? String
+                keyAlias = keystoreProperties["keyAlias"] as? String
+                keyPassword = keystoreProperties["keyPassword"] as? String
+            }
+        }
+    }
+
     namespace = "com.garden.garden_timelapse"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
@@ -33,9 +59,16 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Signed with the release keystore (see signingConfigs above).
+            // Falls back to the debug key when key.properties is absent.
+            val releaseCfg = signingConfigs.findByName("release")
+            signingConfig =
+                if (releaseCfg?.storeFile != null) releaseCfg else signingConfigs.getByName("debug")
+            // R8/minification left off: several plugins ship classes that
+            // break under aggressive shrinking in this early stage. Revisit
+            // before the Play Store release and add a proguard-rules.pro.
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }

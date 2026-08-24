@@ -68,6 +68,13 @@ class ScheduleController extends StateNotifier<ScheduleConfig> {
   }
 }
 
+/// Bumped on every record change (save/delete from any screen). Gallery and
+/// Export listen and reload: [HomeShell] keeps all tabs alive in an
+/// IndexedStack, so their one-time `initState` load would otherwise stay
+/// frozen at the snapshot from app launch (e.g. "No photos captured yet"
+/// right after a capture).
+final recordsVersionProvider = StateProvider<int>((ref) => 0);
+
 /// Loads and mutates a single day's record, one controller per date.
 ///
 /// Deliberately NOT autoDispose: every consumer uses `ref.read(...notifier)`

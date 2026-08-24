@@ -44,6 +44,13 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Release signing secrets — never commit. (The .keystore itself is
+# intentionally kept in git so the release can be rebuilt; its passwords
+# live in the ignored key.properties.)
+/android/key.properties
+# Gradle reports/caches.
+/android/build/
+
 # Widget Preview related
 .widget_preview/
 

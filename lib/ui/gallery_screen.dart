@@ -65,6 +65,9 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Reload when a record changes anywhere (capture, note, delete). The
+    // shell keeps this tab alive, so the one-time initState load is stale.
+    ref.listen(recordsVersionProvider, (_, __) => _load());
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gallery'),

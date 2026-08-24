@@ -181,9 +181,18 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
         );
       }
       await ref.read(dayControllerProvider(_date).notifier).save(record);
+      // Tell Gallery/Export to reload (their one-time initState load is
+      // stale while the shell keeps the tabs alive).
+      ref.read(recordsVersionProvider.notifier).state += 1;
 
       if (!mounted) return;
-      _showCaptureSheet(record);
+      // Advance the active slot so the next capture lands in the empty slot
+      // instead of overwriting the one we just saved.
+      final next = ref
+          .read(photoStoreProvider)
+          .nextSlot(hasSlot1: record.shot1 != null, hasSlot2: record.shot2 != null);
+      setState(() => _activeSlot = next);
+      _showCaptureSheet(record, savedSlot: slot);
     } on Exception catch (e) {
       if (!mounted) return;
       _toast('Capture failed: $e');
@@ -192,7 +201,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
     }
   }
 
-  void _showCaptureSheet(DailyRecord record) {
+  void _showCaptureSheet(DailyRecord record, {required String savedSlot}) {
     final nextSlot = ref
         .read(photoStoreProvider)
         .nextSlot(hasSlot1: record.shot1 != null, hasSlot2: record.shot2 != null);
@@ -218,7 +227,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
             Text(
               nextSlot == null
                   ? 'Both shots done for today.'
-                  : 'Shot ${nextSlot == '1' ? 1 : 2} saved — next: shot ${nextSlot == '1' ? 1 : 2}.',
+                  : 'Shot ${savedSlot == '1' ? 1 : 2} saved — next: shot ${nextSlot == '1' ? 1 : 2}.',
               textAlign: TextAlign.center,
               style: const TextStyle(color: AppTheme.mutedColor),
             ),
@@ -311,12 +320,16 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
             ),
 
           // Top bar: lens + date
+          // Positioned must be a *direct* child of the Stack (it applies
+          // StackParentData; the Flutter assert at basic.dart:5057 is the
+          // debug symptom, and in release the cast throws a TypeError that
+          // drops the whole bar from the tree). SafeArea goes inside.
           if (_ready)
-            SafeArea(
-              child: Positioned(
-                top: 8,
-                left: 12,
-                right: 12,
+            Positioned(
+              top: 8,
+              left: 12,
+              right: 12,
+              child: SafeArea(
                 child: Row(
                   children: [
                     _ChipPill(

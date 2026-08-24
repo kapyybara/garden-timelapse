@@ -88,6 +88,9 @@ class _DayDetailScreenState extends ConsumerState<DayDetailScreen> {
         );
       }
       await ref.read(dayControllerProvider(widget.date).notifier).save(updated);
+      // Tell Gallery/Export to reload (their one-time initState load is
+      // stale while the shell keeps the tabs alive).
+      ref.read(recordsVersionProvider.notifier).state += 1;
       if (!mounted) return;
       setState(() => _record = updated);
       _snack('Shot ${slot == '1' ? 1 : 2} captured.');
@@ -115,6 +118,9 @@ class _DayDetailScreenState extends ConsumerState<DayDetailScreen> {
     );
     if (ok != true) return;
     await ref.read(dayControllerProvider(widget.date).notifier).delete();
+    // Tell Gallery/Export to reload (their one-time initState load is
+    // stale while the shell keeps the tabs alive).
+    ref.read(recordsVersionProvider.notifier).state += 1;
     if (!mounted) return;
     setState(() {
       _record = null;

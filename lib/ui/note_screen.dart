@@ -93,6 +93,9 @@ class _NoteScreenState extends ConsumerState<NoteScreen> {
       weather: weather,
     );
     await ref.read(dayControllerProvider(widget.date).notifier).save(record);
+    // Tell Gallery/Export to reload (their one-time initState load is
+    // stale while the shell keeps the tabs alive).
+    ref.read(recordsVersionProvider.notifier).state += 1;
     if (!mounted) return;
     _snack('Note saved');
     Navigator.pop(context);
