@@ -70,3 +70,4 @@ lib/
 local_plugins/   vendored patched ffmpeg_kit_flutter
 test/            unit tests
 ```
+# garden-timelapse
